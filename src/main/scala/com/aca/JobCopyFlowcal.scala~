@@ -1,0 +1,22 @@
+package com.aca
+
+import com.twitter.scalding._
+import com.twitter.scalding.jdbc._
+import cascading.jdbc._
+import com.aca.jdbc._
+
+class JobCopyFlowcal (args: Args) extends Job(args) {
+	val startTime = CntlFile.getSystemTime
+	val filename = "/tmp/aca/cntl/cntl.txt"
+	val currentControlTime = CntlFile.getValue(filename)
+
+	// TODO - pass the current control time to FFMTR_DAILY so it can get changes since last run.
+
+  	FlowcalTable_FC_METER.read.write(Tsv( args("output_fc")+"/FC_METER" ))
+	FlowcalTable_FC_FFMTR_DAILY(currentControlTime).read.write(Tsv( args("output_fc")+"/FC_FFMTR_DAILY" ))
+
+	override def next: Option[Job] = {
+		CntlFile.update(filename, startTime)
+		None
+	}
+}
